@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.*;
 
 @Entity
 @Table(name = "client")
@@ -21,14 +22,12 @@ public class Client {
     private Long idClient;
 
     private String nom;
-
     private String prenom;
-
     private String email;
-
     private String telephone;
-
     private String numPermis;
-
     private LocalDate dateInscription;
+
+    @OneToMany(mappedBy = "client")
+    private List<Reservation> reservations = new ArrayList<>();
 }
