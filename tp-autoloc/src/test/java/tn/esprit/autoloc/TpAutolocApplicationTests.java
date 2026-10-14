@@ -6,7 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import tn.esprit.autoloc.domain.*;
 import tn.esprit.autoloc.domain.enums.*;
+import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.*;
+import tn.esprit.autoloc.service.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,6 +36,24 @@ class TpAutolocApplicationTests {
 
         @Autowired
         private IMaintenanceRepository maintenanceRepository;
+
+    @Autowired
+    private IAgenceService agenceService;
+
+    @Autowired
+    private IClientService clientService;
+
+    @Autowired
+    private IVehiculeService vehiculeService;
+
+    @Autowired
+    private IEmployeService employeService;
+
+    @Autowired
+    private IContratService contratService;
+
+    @Autowired
+    private IMaintenanceService maintenanceService;
 
     @Test
     void contextLoads() {
@@ -273,7 +293,256 @@ class TpAutolocApplicationTests {
             assertFalse(maintenanceRepository.existsById(maintenanceSauvegardee.getIdMaintenance()));
             System.out.println("Maintenance supprimee avec succes.");
         }
+
+    // ============================================================
+    // PARTIE 2 : AgenceService
+    // ============================================================
+    @Test
+    void testAgenceService() {
+        System.out.println("===== TEST AGENCE SERVICE =====");
+
+        Agence agence = new Agence();
+        agence.setNom("Agence Sfax");
+        agence.setVille("Sfax");
+        agence.setAdresse("5 Rue de la Liberté");
+        agence.setTelephone("74111222");
+
+        // create
+        Agence creee = agenceService.create(agence);
+        assertNotNull(creee);
+        assertNotNull(creee.getIdAgence());
+        System.out.println("Agence créée : " + creee.getNom() + " (id = " + creee.getIdAgence() + ")");
+
+        // findAll
+        List<Agence> toutes = agenceService.findAll();
+        System.out.println("Toutes les agences (" + toutes.size() + ") :");
+        toutes.forEach(a -> System.out.println(" - " + a.getNom()));
+
+        // findById
+        Agence trouvee = agenceService.findById(creee.getIdAgence());
+        assertEquals("Agence Sfax", trouvee.getNom());
+        System.out.println("Agence retrouvée : " + trouvee.getNom());
+
+        // update
+        Agence modif = new Agence();
+        modif.setNom("Agence Sfax Centre");
+        modif.setVille("Sfax");
+        modif.setAdresse("5 Rue de la Liberté");
+        modif.setTelephone("74111222");
+        Agence misAJour = agenceService.update(creee.getIdAgence(), modif);
+        assertEquals("Agence Sfax Centre", misAJour.getNom());
+        System.out.println("Agence modifiée : " + misAJour.getNom());
+
+        // "count" via findAll
+        long nombre = agenceService.findAll().size();
+        assertTrue(nombre > 0);
+        System.out.println("Nombre d'agences : " + nombre);
+
+        // règle de gestion : nom obligatoire
+        Agence sansNom = new Agence();
+        assertThrows(IllegalArgumentException.class, () -> agenceService.create(sansNom));
+
+        // deleteById puis vérification
+        agenceService.deleteById(creee.getIdAgence());
+        assertThrows(ResourceNotFoundException.class,
+                () -> agenceService.findById(creee.getIdAgence()));
+        System.out.println("Agence supprimée : elle n'existe plus.");
     }
+    // ============================================================
+    // PARTIE 3 : ClientService
+    // ============================================================
+    @Test
+    void testClientService() {
+        System.out.println("===== TEST CLIENT SERVICE =====");
+
+        Client c1 = new Client();
+        c1.setNom("Ben Salah");
+        c1.setPrenom("Amine");
+        c1.setEmail("amine.bensalah@mail.com");
+        c1.setTelephone("20111222");
+        c1.setNumPermis("TN123456");
+        c1.setDateInscription(LocalDate.now());
+
+        Client c2 = new Client();
+        c2.setNom("Trabelsi");
+        c2.setPrenom("Sarra");
+        c2.setEmail("sarra.trabelsi@mail.com");
+        c2.setTelephone("20333444");
+        c2.setNumPermis("TN654321");
+        c2.setDateInscription(LocalDate.now());
+
+        Client client1 = clientService.create(c1);
+        Client client2 = clientService.create(c2);
+        assertNotNull(client1.getIdClient());
+        assertNotNull(client2.getIdClient());
+        System.out.println("Clients créés : " + client1.getNom() + " et " + client2.getNom());
+
+        List<Client> tous = clientService.findAll();
+        System.out.println("Liste des clients (" + tous.size() + ") :");
+        tous.forEach(c -> System.out.println(" - " + c.getNom() + " " + c.getPrenom()));
+
+        Client trouve = clientService.findById(client1.getIdClient());
+        assertEquals("Ben Salah", trouve.getNom());
+        System.out.println("Client retrouvé : " + trouve.getNom());
+
+        long nombre = clientService.findAll().size();
+        assertTrue(nombre >= 2);
+        System.out.println("Nombre de clients : " + nombre);
+
+        // règle de gestion : nom et e-mail obligatoires
+        Client invalide = new Client();
+        assertThrows(IllegalArgumentException.class, () -> clientService.create(invalide));
+
+        // suppression des deux clients de test
+        clientService.deleteById(client1.getIdClient());
+        clientService.deleteById(client2.getIdClient());
+        assertThrows(ResourceNotFoundException.class,
+                () -> clientService.findById(client1.getIdClient()));
+        System.out.println("Clients supprimés : ils n'existent plus.");
+    }
+
+    // ============================================================
+    // PARTIE 4 : VehiculeService
+    // ============================================================
+    @Test
+    void testVehiculeService() {
+        System.out.println("===== TEST VEHICULE SERVICE =====");
+
+        Vehicule v = new Vehicule();
+        v.setImmatriculation("123 TUN 4567");
+        v.setMarque("Renault");
+        v.setModele("Clio");
+        v.setCategorie(CategorieVehicule.CITADINE);
+        v.setTarifJournalier(new BigDecimal("80.00"));
+        v.setStatut(StatutVehicule.DISPONIBLE);
+
+        Vehicule cree = vehiculeService.create(v);
+        assertNotNull(cree.getIdVehicule());
+        System.out.println("Véhicule créé : " + cree.getMarque() + " " + cree.getModele()
+                + " (id = " + cree.getIdVehicule() + ")");
+
+        List<Vehicule> tous = vehiculeService.findAll();
+        System.out.println("Tous les véhicules (" + tous.size() + ") :");
+        tous.forEach(x -> System.out.println(" - " + x.getMarque() + " " + x.getModele()));
+
+        Vehicule trouve = vehiculeService.findById(cree.getIdVehicule());
+        assertEquals("Clio", trouve.getModele());
+        System.out.println("Véhicule retrouvé : " + trouve.getModele());
+
+        long nombre = vehiculeService.findAll().size();
+        assertTrue(nombre > 0);
+        System.out.println("Nombre de véhicules : " + nombre);
+
+        // règle de gestion : tarif non négatif
+        Vehicule negatif = new Vehicule();
+        negatif.setTarifJournalier(new BigDecimal("-10"));
+        assertThrows(IllegalArgumentException.class, () -> vehiculeService.create(negatif));
+
+        vehiculeService.deleteById(cree.getIdVehicule());
+        assertThrows(ResourceNotFoundException.class,
+                () -> vehiculeService.findById(cree.getIdVehicule()));
+        System.out.println("Véhicule supprimé : il n'existe plus.");
+    }
+
+    // ============================================================
+    // PARTIE 5 : exercice autonome (Employe, Contrat, Maintenance)
+    // ============================================================
+    @Test
+    void testEmployeService() {
+        System.out.println("===== TEST EMPLOYE SERVICE =====");
+
+        Employe e = new Employe();
+        e.setNom("Jlassi");
+        e.setPrenom("Mohamed");
+        e.setRole(RoleEmploye.AGENT);
+
+        Employe cree = employeService.create(e);
+        assertNotNull(cree.getIdEmploye());
+        System.out.println("Employé créé : " + cree.getNom());
+
+        Employe trouve = employeService.findById(cree.getIdEmploye());
+        assertEquals(RoleEmploye.AGENT, trouve.getRole());
+        System.out.println("Employé retrouvé : " + trouve.getNom() + " (" + trouve.getRole() + ")");
+
+        System.out.println("Nombre d'employés : " + employeService.findAll().size());
+
+        employeService.deleteById(cree.getIdEmploye());
+        assertThrows(ResourceNotFoundException.class,
+                () -> employeService.findById(cree.getIdEmploye()));
+        System.out.println("Employé supprimé.");
+    }
+
+    @Test
+    void testContratService() {
+        System.out.println("===== TEST CONTRAT SERVICE =====");
+
+        Contrat c = new Contrat();
+        c.setDateSignature(LocalDate.now());
+        c.setMontantTotal(new BigDecimal("1500.00"));
+        c.setValide(true);
+
+        Contrat cree = contratService.create(c);
+        assertNotNull(cree.getIdContrat());
+        System.out.println("Contrat créé, id = " + cree.getIdContrat());
+
+        Contrat trouve = contratService.findById(cree.getIdContrat());
+        assertEquals(0, new BigDecimal("1500.00").compareTo(trouve.getMontantTotal()));
+        System.out.println("Contrat retrouvé, montant = " + trouve.getMontantTotal());
+
+        // update
+        Contrat modif = new Contrat();
+        modif.setDateSignature(LocalDate.now());
+        modif.setMontantTotal(new BigDecimal("1800.00"));
+        modif.setValide(true);
+        Contrat misAJour = contratService.update(cree.getIdContrat(), modif);
+        assertEquals(0, new BigDecimal("1800.00").compareTo(misAJour.getMontantTotal()));
+        System.out.println("Contrat modifié, nouveau montant = " + misAJour.getMontantTotal());
+
+        // règle de gestion : montant non négatif
+        Contrat negatif = new Contrat();
+        negatif.setMontantTotal(new BigDecimal("-5"));
+        assertThrows(IllegalArgumentException.class, () -> contratService.create(negatif));
+
+        // création avec un id déjà renseigné : refusée
+        assertThrows(IllegalArgumentException.class, () -> contratService.create(misAJour));
+
+        contratService.deleteById(cree.getIdContrat());
+        assertThrows(ResourceNotFoundException.class,
+                () -> contratService.findById(cree.getIdContrat()));
+        System.out.println("Contrat supprimé.");
+    }
+
+    @Test
+    void testMaintenanceService() {
+        System.out.println("===== TEST MAINTENANCE SERVICE =====");
+
+        Maintenance m = new Maintenance();
+        m.setDateDebut(LocalDate.now());
+        m.setDateFin(LocalDate.now().plusDays(2));
+        m.setDescription("Vidange et contrôle des freins");
+
+        Maintenance cree = maintenanceService.create(m);
+        assertNotNull(cree.getIdMaintenance());
+        System.out.println("Maintenance créée, id = " + cree.getIdMaintenance());
+
+        Maintenance trouvee = maintenanceService.findById(cree.getIdMaintenance());
+        assertEquals("Vidange et contrôle des freins", trouvee.getDescription());
+        System.out.println("Maintenance retrouvée : " + trouvee.getDescription());
+
+        // règle de gestion : date de fin non antérieure à la date de début
+        Maintenance invalide = new Maintenance();
+        invalide.setDateDebut(LocalDate.now());
+        invalide.setDateFin(LocalDate.now().minusDays(1));
+        assertThrows(IllegalArgumentException.class, () -> maintenanceService.create(invalide));
+
+        maintenanceService.deleteById(cree.getIdMaintenance());
+        assertThrows(ResourceNotFoundException.class,
+                () -> maintenanceService.findById(cree.getIdMaintenance()));
+        System.out.println("Maintenance supprimée.");
+    }
+}
+
+}
 
 
 
