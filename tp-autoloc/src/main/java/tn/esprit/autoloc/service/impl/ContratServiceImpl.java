@@ -1,4 +1,5 @@
 package tn.esprit.autoloc.service.impl;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class ContratServiceImpl implements IContratService {
             throw new IllegalArgumentException(
                     "Un nouveau contrat ne doit pas avoir d'identifiant");
         }
+        verifierMontant(contrat);
         return contratRepository.save(contrat);
     }
     @Override
@@ -31,11 +33,18 @@ public class ContratServiceImpl implements IContratService {
     }
     @Override
     public Contrat update(Long id, Contrat contrat) {
+        verifierMontant(contrat);
         Contrat existant = findById(id);
         existant.setMontantTotal(contrat.getMontantTotal());
 // recopier ici les autres attributs modifiables du contrat (Atelier 2),
 // sans toucher à l'identifiant ni à la collection de paiements
         return contratRepository.save(existant);
+    }
+    private void verifierMontant(Contrat contrat) {
+        if (contrat.getMontantTotal() != null
+                && contrat.getMontantTotal().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Le montant total ne peut pas être négatif");
+        }
     }
     @Override
     public void deleteById(Long id) {

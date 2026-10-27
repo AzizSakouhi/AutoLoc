@@ -42,6 +42,7 @@ public class EmployeServiceImpl implements IEmployeService {
         existant.setNom(employe.getNom());
         existant.setPrenom(employe.getPrenom());
         existant.setRole(employe.getRole());
+        existant.setAgence(employe.getAgence());
         return employeRepository.save(existant);
     }
 
