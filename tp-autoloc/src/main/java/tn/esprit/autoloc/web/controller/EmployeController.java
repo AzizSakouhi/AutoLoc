@@ -67,4 +67,15 @@ public class EmployeController {
     public void deleteById(@Parameter(description = "Identifiant") @PathVariable Long id) {
         employeService.deleteById(id);
     }
+    @PutMapping("/{employeId}/affectation/{agenceId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void affecter(@PathVariable Long employeId, @PathVariable Long agenceId) {
+        employeService.affecterEmployeAAgence(employeId, agenceId);
+    }
+
+    @PutMapping("/{employeId}/desaffectation")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void desaffecter(@PathVariable Long employeId) {
+        employeService.desaffecterEmployeDeAgence(employeId);
+    }
 }

@@ -9,4 +9,7 @@ public interface IEmployeService {
     List<Employe> findAll();
     Employe update(Long id, Employe employe);
     void deleteById(Long id);
+    void affecterEmployeAAgence(Long employeId, Long agenceId);
+
+    void desaffecterEmployeDeAgence(Long employeId);
 }
