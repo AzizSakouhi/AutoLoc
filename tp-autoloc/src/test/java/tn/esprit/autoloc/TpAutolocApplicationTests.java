@@ -3,16 +3,13 @@ package tn.esprit.autoloc;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
+import tn.esprit.autoloc.web.dto.MaintenanceDTO;
 import tn.esprit.autoloc.domain.*;
 import tn.esprit.autoloc.domain.enums.*;
 import tn.esprit.autoloc.exception.ResourceNotFoundException;
 import tn.esprit.autoloc.repository.*;
 import tn.esprit.autoloc.service.*;
-import tn.esprit.autoloc.web.dto.AgenceDTO;
-import tn.esprit.autoloc.web.dto.ClientDTO;
-import tn.esprit.autoloc.web.dto.ContratDTO;
-import tn.esprit.autoloc.web.dto.VehiculeDTO;
+import tn.esprit.autoloc.web.dto.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -360,48 +357,35 @@ class TpAutolocApplicationTests {
     // Employe et Maintenance : services non migrés vers les DTO (entités)
     @Test
     void testEmployeService() {
-        System.out.println("===== TEST EMPLOYE SERVICE =====");
-
-        Employe e = new Employe();
-        e.setNom("Jlassi");
-        e.setPrenom("Mohamed");
-        e.setRole(RoleEmploye.AGENT);
-
-        Employe cree = employeService.create(e);
-        assertNotNull(cree.getIdEmploye());
-
-        Employe trouve = employeService.findById(cree.getIdEmploye());
-        assertEquals(RoleEmploye.AGENT, trouve.getRole());
-
-        employeService.deleteById(cree.getIdEmploye());
-        assertThrows(ResourceNotFoundException.class,
-                () -> employeService.findById(cree.getIdEmploye()));
-        System.out.println("Employé supprimé.");
+        EmployeDTO dto = EmployeDTO.builder().nom("Jlassi").prenom("Mohamed").role(RoleEmploye.AGENT).build();
+        EmployeDTO cree = employeService.create(dto);
+        assertNotNull(cree.getId());
+        assertEquals(RoleEmploye.AGENT, employeService.findById(cree.getId()).getRole());
+        employeService.deleteById(cree.getId());
+        assertThrows(ResourceNotFoundException.class, () -> employeService.findById(cree.getId()));
     }
 
     @Test
     void testMaintenanceService() {
-        System.out.println("===== TEST MAINTENANCE SERVICE =====");
+        Vehicule v = new Vehicule();
+        v.setMarque("Renault");
+        v.setModele("Clio");
+        v.setTarifJournalier(new BigDecimal("80.00"));
+        v = vehiculeRepository.save(v);
 
-        Maintenance m = new Maintenance();
-        m.setDateDebut(LocalDate.now());
-        m.setDateFin(LocalDate.now().plusDays(2));
-        m.setDescription("Vidange et contrôle des freins");
+        MaintenanceDTO dto = MaintenanceDTO.builder().dateDebut(LocalDate.now())
+                .dateFin(LocalDate.now().plusDays(2)).description("Vidange")
+                .vehiculeId(v.getIdVehicule()).build();
+        MaintenanceDTO cree = maintenanceService.create(dto);
+        assertNotNull(cree.getId());
+        assertEquals("Vidange", maintenanceService.findById(cree.getId()).getDescription());
 
-        Maintenance cree = maintenanceService.create(m);
-        assertNotNull(cree.getIdMaintenance());
-
-        Maintenance trouvee = maintenanceService.findById(cree.getIdMaintenance());
-        assertEquals("Vidange et contrôle des freins", trouvee.getDescription());
-
-        Maintenance invalide = new Maintenance();
-        invalide.setDateDebut(LocalDate.now());
-        invalide.setDateFin(LocalDate.now().minusDays(1));
+        MaintenanceDTO invalide = MaintenanceDTO.builder().dateDebut(LocalDate.now())
+                .dateFin(LocalDate.now().minusDays(1)).vehiculeId(v.getIdVehicule()).build();
         assertThrows(IllegalArgumentException.class, () -> maintenanceService.create(invalide));
 
-        maintenanceService.deleteById(cree.getIdMaintenance());
-        assertThrows(ResourceNotFoundException.class,
-                () -> maintenanceService.findById(cree.getIdMaintenance()));
-        System.out.println("Maintenance supprimée.");
+        maintenanceService.deleteById(cree.getId());
+        assertThrows(ResourceNotFoundException.class, () -> maintenanceService.findById(cree.getId()));
+        vehiculeRepository.deleteById(v.getIdVehicule());
     }
 }

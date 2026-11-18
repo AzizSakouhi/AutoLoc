@@ -51,7 +51,7 @@ public class TarificationStrategyFactory {
                 && (estJourDeWeekend(reservation.getDateDebut().getDayOfWeek())
                 || estJourDeWeekend(reservation.getDateFin().getDayOfWeek()));
     }
-
+    @SuppressWarnings("java:S8696")
     private boolean estJourDeWeekend(DayOfWeek jour) {
         return jour == DayOfWeek.SATURDAY || jour == DayOfWeek.SUNDAY;
     }
